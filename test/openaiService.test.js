@@ -1,34 +1,71 @@
-// Test file for the OpenAI service
-const { askOpenAI } = require('../backend/openaiService');
+/*
+ * Tests for the openaiService module. These tests verify that the
+ * generateResponse function behaves correctly when the API key is missing and
+ * when a mock request is provided. Because the test environment does not
+ * allow outbound network calls, the mock test monkey patches https.request
+ * to simulate an API response. After each test, the original request
+ * function is restored.
+ */
+
+const assert = require('assert');
+const https = require('https');
+const { generateResponse } = require('../backend/openaiService');
 
 async function testMissingApiKey() {
-  // Ensure the API key is not set
+  const originalKey = process.env.OPENAI_API_KEY;
   delete process.env.OPENAI_API_KEY;
-  let passed = false;
+  let threw = false;
   try {
-    await askOpenAI('Hello');
-    console.error('FAIL: Expected askOpenAI to reject when API key is missing');
+    await generateResponse('Hello');
   } catch (err) {
-    passed = true;
-    console.log('PASS: askOpenAI rejected when API key is missing');
+    threw = true;
+    assert.strictEqual(
+      err.message,
+      'Missing OPENAI_API_KEY environment variable',
+      'generateResponse should throw a specific error when API key is missing'
+    );
   }
-  return passed;
+  assert.ok(threw, 'generateResponse should throw when API key is not set');
+  // Restore
+  process.env.OPENAI_API_KEY = originalKey;
 }
 
-async function runTests() {
-  const results = [];
-  results.push(await testMissingApiKey());
-  // Additional tests could be added here by pushing their results to the array
-  const allPassed = results.every(Boolean);
-  if (allPassed) {
-    console.log('All tests passed');
-  } else {
-    console.error('Some tests failed');
-    process.exitCode = 1;
-  }
+async function testMockRequest() {
+  process.env.OPENAI_API_KEY = 'test-key';
+  const originalRequest = https.request;
+  // Monkey patch https.request to simulate OpenAI API response
+  https.request = (options, callback) => {
+    const fakeResponse = new require('stream').Readable();
+    fakeResponse._read = () => {};
+    // Simulate successful JSON response
+    process.nextTick(() => {
+      const responseBody = JSON.stringify({
+        choices: [
+          {
+            message: { content: 'Test response' }
+          }
+        ]
+      });
+      fakeResponse.emit('data', responseBody);
+      fakeResponse.emit('end');
+    });
+    callback({
+      statusCode: 200,
+      on: (event, handler) => fakeResponse.on(event, handler)
+    });
+    return {
+      on: () => {},
+      write: () => {},
+      end: () => {}
+    };
+  };
+  const result = await generateResponse('What is 2+2?');
+  assert.strictEqual(result, 'Test response', 'generateResponse should return the mocked response content');
+  // Restore original request
+  https.request = originalRequest;
 }
 
-runTests().catch((err) => {
-  console.error('Unhandled error during tests:', err);
-  process.exitCode = 1;
-});
+module.exports = {
+  name: 'openaiService tests',
+  tests: [testMissingApiKey, testMockRequest]
+};
