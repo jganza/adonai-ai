@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adonai.ai Chat Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2rem;
+      }
+      #chat-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-width: 600px;
+      }
+      textarea {
+        width: 100%;
+        height: 100px;
+      }
+      button {
+        padding: 0.5rem 1rem;
+      }
+      #response {
+        white-space: pre-wrap;
+        background: #f4f4f4;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Adonai.ai Chat Demo</h1>
+    <div id="chat-container">
+      <label for="prompt">Enter your prompt:</label>
+      <textarea id="prompt" placeholder="Type something..."></textarea>
+      <button id="sendBtn">Send</button>
+      <div id="response"></div>
+    </div>
+    <script src="/script.js"></script>
+  </body>
+</html>
