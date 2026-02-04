@@ -38,31 +38,15 @@ function serveStatic(filePath) {
  */
 async function requestListener(req, res) {
   const { method, url } = req;
-  // Handle CORS preflight requests
-  if (method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    });
-    res.end();
-    return;
-  }
-
-  // Set default CORS header for all responses
-  const defaultHeaders = {
-    'Access-Control-Allow-Origin': '*'
-  };
-
   if (method === 'GET' && (url === '/' || url === '/index.html')) {
     const { status, content, contentType } = serveStatic('index.html');
-    res.writeHead(status, { 'Content-Type': contentType, ...defaultHeaders });
+    res.writeHead(status, { 'Content-Type': contentType });
     res.end(content);
     return;
   }
   if (method === 'GET' && url === '/script.js') {
     const { status, content, contentType } = serveStatic('script.js');
-    res.writeHead(status, { 'Content-Type': contentType, ...defaultHeaders });
+    res.writeHead(status, { 'Content-Type': contentType });
     res.end(content);
     return;
   }
@@ -75,24 +59,22 @@ async function requestListener(req, res) {
       try {
         const { prompt } = JSON.parse(body || '{}');
         if (!prompt) {
-          res.writeHead(400, { 'Content-Type': 'application/json', ...defaultHeaders });
+          res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Missing prompt' }));
           return;
         }
         const message = await generateResponse(prompt);
-        res.writeHead(200, { 'Content-Type': 'application/json', ...defaultHeaders });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ message }));
       } catch (err) {
-        // Differentiate between OpenAI API errors and other errors
-        const status = err.message.startsWith('OpenAI API') ? 502 : 500;
-        res.writeHead(status, { 'Content-Type': 'application/json', ...defaultHeaders });
+        res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       }
     });
     return;
   }
   // Fallback for any other requests
-  res.writeHead(404, { 'Content-Type': 'text/plain', ...defaultHeaders });
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not Found');
 }
 
