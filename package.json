@@ -1,0 +1,20 @@
+{
+  "name": "adonai-ai-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for the Adonai.ai project with backend and frontend applications.",
+  "scripts": {
+    "start:backend": "node backend/server.js",
+    "start:frontend": "node backend/server.js",
+    "start": "node backend/server.js",
+    "test": "node test/run-tests.js"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "main": "backend/server.js",
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
