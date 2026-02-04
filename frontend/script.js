@@ -1,39 +1,45 @@
-// Client-side JavaScript to handle user interactions for the Adonai chat
-// This script binds a click handler to the "Send" button and posts the prompt to the backend API.
+// Frontend client script for the Adonai.ai chat demo
+// This script binds the Send button to post a prompt to the backend API and display the result.
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Grab references to elements defined in index.html
-  const textarea = document.getElementById('prompt');
+  const promptInput = document.getElementById('prompt');
   const sendBtn = document.getElementById('sendBtn');
   const responseDiv = document.getElementById('response');
 
-  // Check that the expected elements exist
-  if (!textarea || !sendBtn || !responseDiv) {
+  // Ensure required elements exist
+  if (!promptInput || !sendBtn || !responseDiv) {
     console.error('One or more required elements are missing from the page.');
     return;
   }
 
-  // Attach a click event listener to the Send button
+  // Attach click handler to the Send button
   sendBtn.addEventListener('click', async () => {
-    const message = textarea.value.trim();
-    if (!message) {
-      return; // ignore empty prompts
+    const prompt = promptInput.value.trim();
+    if (!prompt) {
+      responseDiv.textContent = 'Please enter a prompt.';
+      return;
     }
-    // Display a loading message while waiting for the API response
+    // Disable the button and show a loading message while awaiting the API response
+    sendBtn.disabled = true;
     responseDiv.textContent = 'Seeking wisdom...';
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
       const data = await res.json();
-      // Display the returned message or an error
-      responseDiv.textContent = data.assistantMessage || data.error || '';
+      if (res.ok) {
+        // Display the response message (support both `message` and `response` keys)
+        responseDiv.textContent = data.message || data.response || '';
+      } else {
+        // Display any error returned from the API
+        responseDiv.textContent = data.error || `Error: ${res.status}`;
+      }
     } catch (err) {
       responseDiv.textContent = 'Error: ' + err.message;
+    } finally {
+      sendBtn.disabled = false;
     }
   });
 });
