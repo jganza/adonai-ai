@@ -1,27 +1,22 @@
-// Frontend client script for the Adonai.ai chat demo
-// This script binds the Send button to post a prompt to the backend API and display the result.
-
+// Frontend client script for ADONAI Biblical Wisdom AI
 document.addEventListener('DOMContentLoaded', () => {
   const promptInput = document.getElementById('prompt');
   const sendBtn = document.getElementById('sendBtn');
   const responseDiv = document.getElementById('response');
 
-  // Ensure required elements exist
-  if (!promptInput || !sendBtn || !responseDiv) {
-    console.error('One or more required elements are missing from the page.');
-    return;
-  }
-
-  // Attach click handler to the Send button
-  sendBtn.addEventListener('click', async () => {
+  async function sendPrompt() {
     const prompt = promptInput.value.trim();
     if (!prompt) {
-      responseDiv.textContent = 'Please enter a prompt.';
+      alert('Please enter your question');
       return;
     }
-    // Disable the button and show a loading message while awaiting the API response
+    
+    // Disable button and show loading
     sendBtn.disabled = true;
-    responseDiv.textContent = 'Seeking wisdom...';
+    sendBtn.textContent = 'Seeking wisdom...';
+    responseDiv.textContent = 'ADONAI is contemplating your question...';
+    responseDiv.className = 'loading';
+    
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -29,17 +24,32 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ prompt })
       });
       const data = await res.json();
+      
       if (res.ok) {
-        // Display the response message (support both `message` and `response` keys)
-        responseDiv.textContent = data.message || data.response || '';
+        responseDiv.textContent = data.message;
+        responseDiv.className = '';
       } else {
-        // Display any error returned from the API
-        responseDiv.textContent = data.error || `Error: ${res.status}`;
+        responseDiv.textContent = 'Error: ' + data.error;
+        responseDiv.className = '';
       }
     } catch (err) {
-      responseDiv.textContent = 'Error: ' + err.message;
+      responseDiv.textContent = 'Error connecting to ADONAI: ' + err.message;
+      responseDiv.className = '';
     } finally {
+      // Re-enable button
       sendBtn.disabled = false;
+      sendBtn.textContent = 'Seek Wisdom';
+    }
+  }
+
+  // Send on button click
+  sendBtn.addEventListener('click', sendPrompt);
+  
+  // Send on Enter (Ctrl+Enter for new line)
+  promptInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+      e.preventDefault();
+      sendPrompt();
     }
   });
 });
