@@ -1,23 +1,25 @@
-// Client-side JavaScript to handle form submission and display response
-// Wait until the DOM is fully loaded
+// Client-side JavaScript to handle user interactions for the Adonai chat
+// This script binds a click handler to the "Send" button and posts the prompt to the backend API.
 
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.querySelector('form');
-  const textarea = document.querySelector('textarea');
+  // Grab references to elements defined in index.html
+  const textarea = document.getElementById('prompt');
+  const sendBtn = document.getElementById('sendBtn');
   const responseDiv = document.getElementById('response');
 
-  if (!form || !textarea || !responseDiv) {
-    console.error('Required elements not found in the DOM');
+  // Check that the expected elements exist
+  if (!textarea || !sendBtn || !responseDiv) {
+    console.error('One or more required elements are missing from the page.');
     return;
   }
 
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
+  // Attach a click event listener to the Send button
+  sendBtn.addEventListener('click', async () => {
     const message = textarea.value.trim();
     if (!message) {
-      return;
+      return; // ignore empty prompts
     }
-    // Show loading message while waiting for the API response
+    // Display a loading message while waiting for the API response
     responseDiv.textContent = 'Seeking wisdom...';
     try {
       const res = await fetch('/api/chat', {
@@ -28,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ message })
       });
       const data = await res.json();
-      // Display the assistant's message or an error message
+      // Display the returned message or an error
       responseDiv.textContent = data.assistantMessage || data.error || '';
     } catch (err) {
       responseDiv.textContent = 'Error: ' + err.message;
