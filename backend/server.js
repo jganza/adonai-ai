@@ -1,84 +1,61 @@
 /*
- * Simple Node.js HTTP server for the Adonai.ai monorepo. This server
- * statically serves the frontend assets and exposes an API endpoint for
- * interacting with the OpenAI API. It intentionally avoids third‑party
- * dependencies by leveraging the built‑in http and fs modules. The API key
- * should be provided via the OPENAI_API_KEY environment variable.
+ * ADONAI AI - Express Server (Phase 1)
+ *
+ * Serves the frontend and exposes API endpoints for:
+ * - Chat with AI (anonymous + authenticated)
+ * - User authentication (via Supabase)
+ * - Conversation history management
+ * - Rate limiting
+ *
+ * The server gracefully degrades: if Supabase is not configured,
+ * it still works as a basic chat app (anonymous only, no history).
  */
 
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const { generateResponse } = require('./openaiService');
+require('dotenv').config();
 
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { isSupabaseConfigured } = require('./config/supabase');
+
+// Import route handlers
+const chatRoutes = require('./routes/chat');
+const authRoutes = require('./routes/auth');
+const conversationRoutes = require('./routes/conversations');
+
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-/**
- * Reads a file from the frontend directory and returns a { status, content, contentType } object.
- * Returns a 404 response if the file does not exist.
- *
- * @param {string} filePath Relative path to the file within the frontend directory.
- */
-function serveStatic(filePath) {
-  const fullPath = path.join(__dirname, '..', 'frontend', filePath);
-  if (!fs.existsSync(fullPath)) {
-    return { status: 404, content: 'Not Found', contentType: 'text/plain' };
-  }
-  const ext = path.extname(fullPath);
-  const contentType = ext === '.js' ? 'application/javascript' : 'text/html';
-  const content = fs.readFileSync(fullPath);
-  return { status: 200, content, contentType };
-}
+// --- Middleware ---
+app.use(cors());
+app.use(express.json());
 
-/**
- * Handles incoming HTTP requests.
- *
- * @param {http.IncomingMessage} req
- * @param {http.ServerResponse} res
- */
-async function requestListener(req, res) {
-  const { method, url } = req;
-  if (method === 'GET' && (url === '/' || url === '/index.html')) {
-    const { status, content, contentType } = serveStatic('index.html');
-    res.writeHead(status, { 'Content-Type': contentType });
-    res.end(content);
-    return;
-  }
-  if (method === 'GET' && url === '/script.js') {
-    const { status, content, contentType } = serveStatic('script.js');
-    res.writeHead(status, { 'Content-Type': contentType });
-    res.end(content);
-    return;
-  }
-  if (method === 'POST' && url === '/api/chat') {
-    let body = '';
-    req.on('data', (chunk) => {
-      body += chunk;
-    });
-    req.on('end', async () => {
-      try {
-        const { prompt } = JSON.parse(body || '{}');
-        if (!prompt) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Missing prompt' }));
-          return;
-        }
-        const message = await generateResponse(prompt);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ message }));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-    return;
-  }
-  // Fallback for any other requests
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('Not Found');
-}
+// Trust proxy headers (needed for rate limiting behind Render/Cloudflare)
+app.set('trust proxy', 1);
 
-const server = http.createServer(requestListener);
-server.listen(PORT, () => {
-  console.log(`Adonai.ai server running on http://localhost:${PORT}`);
+// --- API Routes ---
+app.use('/api/chat', chatRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/conversations', conversationRoutes);
+
+// --- Static Frontend Files ---
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
+// Serve index.html for the root route and any unmatched routes (SPA fallback)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
+
+// --- Start Server ---
+app.listen(PORT, () => {
+  console.log(`ADONAI AI server running on http://localhost:${PORT}`);
+  if (isSupabaseConfigured()) {
+    console.log('Supabase: Connected (auth + history enabled)');
+  } else {
+    console.log('Supabase: Not configured (anonymous-only mode)');
+    console.log('  Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_SERVICE_KEY to enable auth');
+  }
+});
+
+// Export for testing
+module.exports = app;
