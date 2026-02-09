@@ -16,22 +16,131 @@
         min-height: 100vh;
         display: flex;
         justify-content: center;
-        align-items: center;
-        padding: 2rem;
+        align-items: flex-start;
+        padding: 1rem;
       }
+
+      /* --- Layout: Sidebar + Main --- */
+      .app-layout {
+        display: flex;
+        max-width: 1100px;
+        width: 100%;
+        min-height: calc(100vh - 2rem);
+        gap: 1rem;
+      }
+
+      /* --- Sidebar (conversation history) --- */
+      .sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.95);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        padding: 1.5rem 1rem;
+        display: none; /* Hidden until user is authenticated */
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .sidebar.visible {
+        display: flex;
+      }
+      .sidebar h3 {
+        color: #1a4d7c;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #1a4d7c;
+      }
+      .sidebar-actions {
+        margin-bottom: 1rem;
+      }
+      .btn-new-chat {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        background: #1a4d7c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      .btn-new-chat:hover {
+        background: #2c5f8d;
+      }
+      .conversation-list {
+        flex: 1;
+        overflow-y: auto;
+        list-style: none;
+      }
+      .conversation-list li {
+        padding: 0.7rem 0.8rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #333;
+        margin-bottom: 0.3rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.2s;
+        position: relative;
+      }
+      .conversation-list li:hover {
+        background: #e8f0fe;
+      }
+      .conversation-list li.active {
+        background: #d0e1f9;
+        font-weight: 600;
+      }
+      .conversation-list li .delete-conv {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 1rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: none;
+      }
+      .conversation-list li:hover .delete-conv {
+        display: inline;
+      }
+      .conversation-list li .delete-conv:hover {
+        color: #c0392b;
+        background: rgba(192,57,43,0.1);
+      }
+      .no-conversations {
+        color: #999;
+        font-style: italic;
+        font-size: 0.85rem;
+        text-align: center;
+        padding: 1rem 0;
+      }
+
+      /* --- Main Container --- */
       .container {
+        flex: 1;
         background: white;
         border-radius: 16px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         max-width: 800px;
         width: 100%;
         padding: 2rem;
+        display: flex;
+        flex-direction: column;
       }
       header {
         text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
         border-bottom: 2px solid #1a4d7c;
+        position: relative;
       }
       h1 {
         color: #1a4d7c;
@@ -44,20 +153,277 @@
         font-style: italic;
         font-size: 1.1rem;
       }
+
+      /* --- Auth Bar (top-right of header) --- */
+      .auth-bar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .auth-bar .user-info {
+        font-size: 0.8rem;
+        color: #666;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .btn-auth {
+        padding: 0.4rem 0.8rem;
+        border: 1px solid #1a4d7c;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: white;
+        color: #1a4d7c;
+      }
+      .btn-auth:hover {
+        background: #1a4d7c;
+        color: white;
+      }
+      .btn-auth.primary {
+        background: #1a4d7c;
+        color: white;
+      }
+      .btn-auth.primary:hover {
+        background: #2c5f8d;
+      }
+
+      /* --- Auth Modal --- */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+      .modal-overlay.visible {
+        display: flex;
+      }
+      .modal {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      }
+      .modal h2 {
+        color: #1a4d7c;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      .modal .form-group {
+        margin-bottom: 1rem;
+      }
+      .modal label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+      .modal input[type="email"],
+      .modal input[type="password"],
+      .modal input[type="text"] {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color 0.3s;
+      }
+      .modal input:focus {
+        outline: none;
+        border-color: #1a4d7c;
+      }
+      .btn-submit {
+        width: 100%;
+        padding: 0.8rem;
+        background: #1a4d7c;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-top: 0.5rem;
+      }
+      .btn-submit:hover {
+        background: #2c5f8d;
+      }
+      .btn-submit:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 1.2rem 0;
+        color: #999;
+        font-size: 0.85rem;
+      }
+      .divider::before,
+      .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e0e0e0;
+      }
+      .divider::before { margin-right: 0.8rem; }
+      .divider::after { margin-left: 0.8rem; }
+      .btn-google {
+        width: 100%;
+        padding: 0.7rem;
+        background: white;
+        color: #333;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+      .btn-google:hover {
+        border-color: #4285f4;
+        background: #f8f9ff;
+      }
+      .btn-google svg {
+        width: 18px;
+        height: 18px;
+      }
+      .modal-switch {
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: #666;
+      }
+      .modal-switch a {
+        color: #1a4d7c;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+      .modal-close {
+        position: absolute;
+        top: 0.8rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #999;
+        padding: 0.2rem 0.5rem;
+      }
+      .modal-close:hover {
+        color: #333;
+      }
+      .modal-wrapper {
+        position: relative;
+      }
+      .auth-error {
+        color: #c0392b;
+        font-size: 0.85rem;
+        text-align: center;
+        margin-top: 0.5rem;
+        min-height: 1.2em;
+      }
+      .auth-success {
+        color: #27ae60;
+        font-size: 0.85rem;
+        text-align: center;
+        margin-top: 0.5rem;
+      }
+
+      /* --- Disclaimer --- */
       .disclaimer {
         background: #fff9e6;
         border-left: 4px solid #d4af37;
         padding: 1rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
         border-radius: 4px;
         font-size: 0.9rem;
         color: #666;
       }
+
+      /* --- Rate limit banner --- */
+      .rate-limit-info {
+        background: #e8f4f8;
+        border-left: 4px solid #3498db;
+        padding: 0.6rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        color: #555;
+        display: none;
+      }
+      .rate-limit-info.visible {
+        display: block;
+      }
+      .rate-limit-info.warning {
+        background: #fef5e7;
+        border-left-color: #f39c12;
+      }
+      .rate-limit-info.exhausted {
+        background: #fdedec;
+        border-left-color: #e74c3c;
+      }
+
+      /* --- Chat Area --- */
       #chat-container {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 1rem;
+        flex: 1;
       }
+
+      /* Message history display */
+      .message-history {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 0.5rem 0;
+      }
+      .message-bubble {
+        padding: 1rem 1.2rem;
+        border-radius: 12px;
+        line-height: 1.7;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+      }
+      .message-bubble.user {
+        background: #e8f0fe;
+        border-left: 4px solid #3498db;
+        align-self: flex-end;
+        max-width: 90%;
+      }
+      .message-bubble.assistant {
+        background: #f8f9fa;
+        border-left: 4px solid #1a4d7c;
+        max-width: 100%;
+      }
+      .message-bubble .msg-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #888;
+        margin-bottom: 0.3rem;
+        text-transform: uppercase;
+      }
+
+      /* --- Input Area --- */
       label {
         font-weight: 600;
         color: #333;
@@ -66,7 +432,7 @@
       }
       textarea {
         width: 100%;
-        height: 120px;
+        height: 100px;
         padding: 1rem;
         border: 2px solid #e0e0e0;
         border-radius: 8px;
@@ -79,10 +445,10 @@
         outline: none;
         border-color: #1a4d7c;
       }
-      button {
+      .send-btn {
         background: #1a4d7c;
         color: white;
-        padding: 1rem 2rem;
+        padding: 0.8rem 2rem;
         border: none;
         border-radius: 8px;
         font-size: 1.1rem;
@@ -90,13 +456,15 @@
         cursor: pointer;
         transition: background 0.3s;
       }
-      button:hover {
+      .send-btn:hover {
         background: #2c5f8d;
       }
-      button:disabled {
+      .send-btn:disabled {
         background: #ccc;
         cursor: not-allowed;
       }
+
+      /* Legacy single response display (anonymous mode) */
       #response {
         white-space: pre-wrap;
         background: #f8f9fa;
@@ -105,7 +473,7 @@
         border-left: 4px solid #1a4d7c;
         line-height: 1.8;
         color: #333;
-        min-height: 100px;
+        min-height: 80px;
         font-size: 1rem;
       }
       #response:empty:before {
@@ -117,40 +485,146 @@
         color: #1a4d7c;
         font-style: italic;
       }
+
+      /* --- Footer --- */
       footer {
         text-align: center;
-        margin-top: 2rem;
+        margin-top: 1.5rem;
         padding-top: 1rem;
         border-top: 1px solid #e0e0e0;
         color: #999;
         font-size: 0.9rem;
       }
+
+      /* --- Responsive --- */
+      @media (max-width: 768px) {
+        body { padding: 0.5rem; }
+        .app-layout {
+          flex-direction: column;
+          min-height: auto;
+        }
+        .sidebar {
+          width: 100%;
+          max-height: 200px;
+        }
+        .container {
+          padding: 1.2rem;
+        }
+        h1 { font-size: 1.8rem; }
+        .auth-bar {
+          position: static;
+          justify-content: center;
+          margin-top: 0.5rem;
+        }
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <header>
-        <h1>ADONAI</h1>
-        <p class="tagline">Biblical Wisdom for Modern Life</p>
-      </header>
-      
-      <div class="disclaimer">
-        <strong>Note:</strong> ADONAI is a tool pointing to Scripture - not a replacement for the Holy Spirit, pastoral care, or Christian community. Test all guidance against God's Word.
-      </div>
-
-      <div id="chat-container">
-        <div>
-          <label for="prompt">Ask for wisdom:</label>
-          <textarea id="prompt" placeholder="What Biblical wisdom do you seek? Ask about career, relationships, ethics, decisions, or any life question..."></textarea>
+    <div class="app-layout">
+      <!-- Sidebar: Conversation History (visible when signed in) -->
+      <aside class="sidebar" id="sidebar">
+        <h3>Conversations</h3>
+        <div class="sidebar-actions">
+          <button class="btn-new-chat" id="newChatBtn">+ New Conversation</button>
         </div>
-        <button id="sendBtn">Seek Wisdom</button>
-        <div id="response"></div>
-      </div>
+        <ul class="conversation-list" id="conversationList">
+          <li class="no-conversations">No conversations yet</li>
+        </ul>
+      </aside>
 
-      <footer>
-        © 2025 ADONAI. All Rights Reserved. | <em>"Ask for the ancient paths, where the good way is, and walk in it." - Jeremiah 6:16</em>
-      </footer>
+      <!-- Main Content -->
+      <div class="container">
+        <header>
+          <h1>ADONAI</h1>
+          <p class="tagline">Biblical Wisdom for Modern Life</p>
+          <!-- Auth Bar -->
+          <div class="auth-bar" id="authBar">
+            <!-- Anonymous state (shown by default) -->
+            <div id="authAnonymous">
+              <button class="btn-auth primary" id="signInBtn">Sign In</button>
+              <button class="btn-auth" id="signUpBtn">Sign Up</button>
+            </div>
+            <!-- Authenticated state (hidden by default) -->
+            <div id="authUser" style="display:none;">
+              <span class="user-info" id="userDisplayName"></span>
+              <button class="btn-auth" id="signOutBtn">Sign Out</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="disclaimer">
+          <strong>Note:</strong> ADONAI is a tool pointing to Scripture - not a replacement for the Holy Spirit, pastoral care, or Christian community. Test all guidance against God's Word.
+        </div>
+
+        <!-- Rate limit info banner -->
+        <div class="rate-limit-info" id="rateLimitInfo"></div>
+
+        <div id="chat-container">
+          <!-- Message history (shown for authenticated users with active conversation) -->
+          <div class="message-history" id="messageHistory" style="display:none;"></div>
+
+          <div>
+            <label for="prompt">Ask for wisdom:</label>
+            <textarea id="prompt" placeholder="What Biblical wisdom do you seek? Ask about career, relationships, ethics, decisions, or any life question..."></textarea>
+          </div>
+          <button class="send-btn" id="sendBtn">Seek Wisdom</button>
+
+          <!-- Single response (shown for anonymous users or new conversations) -->
+          <div id="response"></div>
+        </div>
+
+        <footer>
+          &copy; 2025 ADONAI. All Rights Reserved. | <em>"Ask for the ancient paths, where the good way is, and walk in it." - Jeremiah 6:16</em>
+        </footer>
+      </div>
     </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+      <div class="modal-wrapper">
+        <div class="modal">
+          <button class="modal-close" id="modalClose">&times;</button>
+          <h2 id="modalTitle">Sign In</h2>
+
+          <!-- Email/Password Form -->
+          <form id="authForm">
+            <!-- Name field (sign up only) -->
+            <div class="form-group" id="nameGroup" style="display:none;">
+              <label for="authName">Name</label>
+              <input type="text" id="authName" placeholder="Your name" />
+            </div>
+            <div class="form-group">
+              <label for="authEmail">Email</label>
+              <input type="email" id="authEmail" placeholder="you@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="authPassword">Password</label>
+              <input type="password" id="authPassword" placeholder="Min. 6 characters" required minlength="6" />
+            </div>
+            <button type="submit" class="btn-submit" id="authSubmitBtn">Sign In</button>
+          </form>
+
+          <div class="auth-error" id="authError"></div>
+          <div class="auth-success" id="authSuccess"></div>
+
+          <div class="divider">or</div>
+
+          <!-- Google OAuth Button -->
+          <button class="btn-google" id="googleSignInBtn">
+            <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Continue with Google
+          </button>
+
+          <!-- Toggle between Sign In / Sign Up -->
+          <div class="modal-switch" id="modalSwitch">
+            Don't have an account? <a id="switchToSignUp">Sign up</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load Supabase JS client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="/script.js"></script>
   </body>
 </html>

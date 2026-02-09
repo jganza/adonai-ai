@@ -1,15 +1,20 @@
 {
   "name": "adonai-ai-monorepo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "Monorepo for the Adonai.ai project with backend and frontend applications.",
+  "description": "ADONAI Biblical Wisdom AI - with authentication and conversation history.",
   "scripts": {
     "start:backend": "node backend/server.js",
     "start:frontend": "node backend/server.js",
     "start": "node backend/server.js",
     "test": "node test/run-tests.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
   "devDependencies": {},
   "main": "backend/server.js",
   "author": "",
