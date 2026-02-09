@@ -50,6 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Rate limit
   const rateLimitInfo = document.getElementById('rateLimitInfo');
 
+  // Inline validation elements
+  const emailError = document.getElementById('emailError');
+  const passwordError = document.getElementById('passwordError');
+  const passwordHint = document.getElementById('passwordHint');
+  const toastContainer = document.getElementById('toastContainer');
+
   // --- State ---
   let supabaseClient = null; // Supabase client (initialized after config fetch)
   let currentUser = null;    // Current authenticated user
@@ -57,6 +63,103 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentConversationId = null; // Active conversation ID
   let isSignUpMode = false;  // Is the modal in sign-up mode?
   let authConfigured = false; // Is Supabase configured on the server?
+
+  // =====================================================
+  // TOAST NOTIFICATION SYSTEM
+  // =====================================================
+
+  function showToast(message, type, duration) {
+    type = type || 'info';
+    duration = duration || 3500;
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    // Trigger animation on next frame
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, duration);
+  }
+
+  // =====================================================
+  // FORM VALIDATION HELPERS
+  // =====================================================
+
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function clearFieldErrors() {
+    emailError.textContent = '';
+    passwordError.textContent = '';
+    authEmail.classList.remove('input-error');
+    authPassword.classList.remove('input-error');
+  }
+
+  /**
+   * Validates form fields before submission.
+   * Returns true if valid, false if not (and shows inline errors).
+   */
+  function validateAuthForm() {
+    clearFieldErrors();
+    let valid = true;
+    const email = authEmail.value.trim();
+    const password = authPassword.value;
+
+    if (!email) {
+      emailError.textContent = 'Please enter your email address.';
+      authEmail.classList.add('input-error');
+      valid = false;
+    } else if (!isValidEmail(email)) {
+      emailError.textContent = 'Please enter a valid email address.';
+      authEmail.classList.add('input-error');
+      valid = false;
+    }
+
+    if (!password) {
+      passwordError.textContent = 'Please enter a password.';
+      authPassword.classList.add('input-error');
+      valid = false;
+    } else if (password.length < 6) {
+      passwordError.textContent = 'Password must be at least 6 characters.';
+      authPassword.classList.add('input-error');
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  /**
+   * Maps raw Supabase error messages to user-friendly text.
+   */
+  function friendlyErrorMessage(err) {
+    const msg = (err.message || '').toLowerCase();
+    if (msg.includes('user already registered') || msg.includes('already been registered')) {
+      return 'This email is already registered. Try signing in instead.';
+    }
+    if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+      return 'Invalid email or password. Please try again.';
+    }
+    if (msg.includes('email not confirmed')) {
+      return 'Please confirm your email address first. Check your inbox.';
+    }
+    if (msg.includes('password') && msg.includes('6')) {
+      return 'Password must be at least 6 characters.';
+    }
+    if (msg.includes('rate limit') || msg.includes('too many')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (msg.includes('network') || msg.includes('fetch')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    // Fall back to the original message, but capitalize the first letter
+    const original = err.message || 'Something went wrong. Please try again.';
+    return original.charAt(0).toUpperCase() + original.slice(1);
+  }
 
   // =====================================================
   // INITIALIZATION
@@ -72,16 +175,24 @@ document.addEventListener('DOMContentLoaded', () => {
         authConfigured = true;
         supabaseClient = supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
 
-        // Check for existing session
+        // Check for existing session (silent restore, no toast)
         const { data: { session } } = await supabaseClient.auth.getSession();
+        let initialSessionHandled = false;
         if (session) {
           handleAuthSession(session);
+          initialSessionHandled = true;
         }
 
         // Listen for auth state changes (handles OAuth redirect, token refresh)
         supabaseClient.auth.onAuthStateChange((event, session) => {
           if (event === 'SIGNED_IN' && session) {
-            handleAuthSession(session);
+            if (initialSessionHandled) {
+              // Skip the duplicate fired right after getSession
+              initialSessionHandled = false;
+              return;
+            }
+            // Show welcome toast for new sign-ins (OAuth redirect, etc.)
+            handleAuthSession(session, true);
           } else if (event === 'SIGNED_OUT') {
             handleSignOut();
           }
@@ -102,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // AUTH FUNCTIONS
   // =====================================================
 
-  function handleAuthSession(session) {
+  function handleAuthSession(session, showWelcome) {
     currentUser = session.user;
     accessToken = session.access_token;
 
@@ -118,6 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Close modal if open
     closeModal();
+
+    // Show welcome toast if this was triggered by a user action
+    if (showWelcome) {
+      showToast('Welcome back, ' + name + '!', 'success');
+    }
 
     // Load conversation history
     loadConversations();
@@ -149,7 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     isSignUpMode = signUp;
     modalTitle.textContent = signUp ? 'Sign Up' : 'Sign In';
     authSubmitBtn.textContent = signUp ? 'Create Account' : 'Sign In';
+    authSubmitBtn.disabled = false;
     nameGroup.style.display = signUp ? 'block' : 'none';
+    passwordHint.style.display = signUp ? 'block' : 'none';
     modalSwitch.innerHTML = signUp
       ? 'Already have an account? <a id="switchToSignIn">Sign in</a>'
       : 'Don\'t have an account? <a id="switchToSignUp">Sign up</a>';
@@ -158,10 +276,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const switchLink = modalSwitch.querySelector('a');
     switchLink.addEventListener('click', () => openModal(!signUp));
 
-    // Clear form
+    // Clear form and errors
     authForm.reset();
     authError.textContent = '';
     authSuccess.textContent = '';
+    clearFieldErrors();
 
     authModal.classList.add('visible');
   }
@@ -171,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authForm.reset();
     authError.textContent = '';
     authSuccess.textContent = '';
+    clearFieldErrors();
   }
 
   // --- Event listeners ---
@@ -187,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await supabaseClient.auth.signOut();
     }
     handleSignOut();
+    showToast('Signed out successfully.', 'info');
   });
 
   // Email/password form submit
@@ -194,7 +315,16 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     authError.textContent = '';
     authSuccess.textContent = '';
+
+    // Client-side validation first
+    if (!validateAuthForm()) return;
+
+    // Show loading state
     authSubmitBtn.disabled = true;
+    const originalBtnText = authSubmitBtn.textContent;
+    authSubmitBtn.innerHTML = isSignUpMode
+      ? '<span class="spinner"></span>Creating account...'
+      : '<span class="spinner"></span>Signing in...';
 
     const email = authEmail.value.trim();
     const password = authPassword.value;
@@ -215,10 +345,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.user && !data.session) {
           // Email confirmation required
-          authSuccess.textContent = 'Check your email to confirm your account, then sign in.';
+          authSuccess.textContent = 'Account created! Check your email to confirm, then sign in.';
+          showToast('Account created! Check your email to confirm.', 'success', 5000);
         } else if (data.session) {
           // Auto-confirmed (e.g., in development)
-          handleAuthSession(data.session);
+          authSuccess.textContent = 'Account created! Signing you in...';
+          showToast('Account created successfully!', 'success');
+          setTimeout(() => handleAuthSession(data.session, true), 1200);
+          return; // Don't re-enable button, modal will close
         }
       } else {
         // Sign in
@@ -228,12 +362,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (error) throw error;
-        // Session handled by onAuthStateChange
+
+        // Show immediate feedback - onAuthStateChange will finish the job
+        showToast('Welcome back!', 'success');
+        handleAuthSession(data.session, true);
+        return; // Don't re-enable button, modal will close
       }
     } catch (err) {
-      authError.textContent = err.message || 'Authentication failed';
+      const friendly = friendlyErrorMessage(err);
+      authError.textContent = friendly;
+      showToast(friendly, 'error');
     } finally {
       authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = originalBtnText;
     }
   });
 
@@ -241,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
   googleSignInBtn.addEventListener('click', async () => {
     if (!supabaseClient) return;
     try {
+      showToast('Redirecting to Google...', 'info', 2000);
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -249,7 +391,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (error) throw error;
     } catch (err) {
-      authError.textContent = err.message || 'Google sign-in failed';
+      const friendly = friendlyErrorMessage(err);
+      authError.textContent = friendly;
+      showToast(friendly, 'error');
     }
   });
 
