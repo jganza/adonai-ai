@@ -1,6 +1,6 @@
-# ADONAI AI - Biblical Wisdom for Modern Life
+# ADONAI GUIDE - Biblical Wisdom for Modern Life
 
-ADONAI is a web application that uses OpenAI's GPT-4o model to provide biblical wisdom for modern life. Phase 1 adds user authentication and conversation history via Supabase.
+ADONAI GUIDE is a web application that uses OpenAI's GPT-4o model to provide biblical wisdom for modern life. Phase 1 adds user authentication and conversation history via Supabase.
 
 ## Features
 

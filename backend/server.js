@@ -1,5 +1,5 @@
 /*
- * ADONAI AI - Express Server (Phase 1)
+ * ADONAI GUIDE - Express Server (Phase 1)
  *
  * Serves the frontend and exposes API endpoints for:
  * - Chat with AI (anonymous + authenticated)
@@ -48,7 +48,7 @@ app.get('*', (req, res) => {
 
 // --- Start Server ---
 app.listen(PORT, () => {
-  console.log(`ADONAI AI server running on http://localhost:${PORT}`);
+  console.log(`ADONAI GUIDE server running on http://localhost:${PORT}`);
   if (isSupabaseConfigured()) {
     console.log('Supabase: Connected (auth + history enabled)');
   } else {

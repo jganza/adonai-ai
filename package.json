@@ -1,8 +1,8 @@
 {
-  "name": "adonai-ai-monorepo",
-  "version": "2.0.0",
+  "name": "adonai-guide",
+  "version": "2.1.0",
   "private": true,
-  "description": "ADONAI Biblical Wisdom AI - with authentication and conversation history.",
+  "description": "ADONAI GUIDE - Biblical Wisdom AI with authentication and conversation history.",
   "scripts": {
     "start:backend": "node backend/server.js",
     "start:frontend": "node backend/server.js",
