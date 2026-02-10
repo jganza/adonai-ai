@@ -1,5 +1,5 @@
 /*
- * ADONAI AI - Frontend Client (Phase 1)
+ * ADONAI GUIDE - Frontend Client (Phase 1)
  *
  * Handles:
  * - User authentication (sign up, sign in, sign out, Google OAuth)
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const label = document.createElement('div');
       label.className = 'msg-label';
-      label.textContent = msg.role === 'user' ? 'You' : 'ADONAI';
+      label.textContent = msg.role === 'user' ? 'You' : 'ADONAI GUIDE';
 
       const content = document.createElement('div');
       content.textContent = msg.content;
@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const label = document.createElement('div');
     label.className = 'msg-label';
-    label.textContent = role === 'user' ? 'You' : 'ADONAI';
+    label.textContent = role === 'user' ? 'You' : 'ADONAI GUIDE';
 
     const contentDiv = document.createElement('div');
     contentDiv.textContent = content;
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
       loadingBubble.id = 'loadingBubble';
       const loadingLabel = document.createElement('div');
       loadingLabel.className = 'msg-label';
-      loadingLabel.textContent = 'ADONAI';
+      loadingLabel.textContent = 'ADONAI GUIDE';
       const loadingContent = document.createElement('div');
       loadingContent.className = 'loading';
       loadingContent.textContent = 'Contemplating your question...';
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       messageHistory.scrollTop = messageHistory.scrollHeight;
     } else {
       // Anonymous mode - use single response div
-      responseDiv.textContent = 'ADONAI is contemplating your question...';
+      responseDiv.textContent = 'ADONAI GUIDE is contemplating your question...';
       responseDiv.className = 'loading';
     }
 
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } catch (err) {
-      const errorMsg = 'Error connecting to ADONAI: ' + err.message;
+      const errorMsg = 'Error connecting to ADONAI GUIDE: ' + err.message;
       if (currentUser) {
         const loadingEl = document.getElementById('loadingBubble');
         if (loadingEl) loadingEl.remove();
