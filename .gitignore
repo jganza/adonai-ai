@@ -26,3 +26,6 @@ $RECYCLE.BIN/
 
 # Render environment
 render.yaml.local
+
+# Build artifacts
+*.zip
